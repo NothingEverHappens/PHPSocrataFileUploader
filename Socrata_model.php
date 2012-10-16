@@ -32,7 +32,6 @@ class Socrata_model {
      */
 
     public function __construct( $options = Array() ) {
-        /*............... TODO: Duplicated  */
         if ( !extension_loaded( 'curl' ) ) {
             throw new Exception( "curl is not installed" );
         }
@@ -411,7 +410,8 @@ class Socrata_model {
      * @throws RuntimeException If chunk size is smaller than the biggest line in the file
      */
 
-    public function not_tested_split_csv_by_size( $file_path, $chunk_size = 1000000 ) {
+    /*............... TODO: Test and implement */
+    public function not_tested_split_csv_by_size_v2( $file_path, $chunk_size = 1000000 ) {
 
         if ( !file_exists( $file_path ) ) {
             throw new InvalidArgumentException( "File doesn't exist " . $file_path );
