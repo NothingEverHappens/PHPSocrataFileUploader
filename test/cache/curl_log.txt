@@ -1,0 +1,28 @@
+* About to connect() to data.taxpayer.net port 443 (#0)
+*   Trying 216.227.229.186...
+* connected
+* Connected to data.taxpayer.net (216.227.229.186) port 443 (#0)
+* SSL connection using DHE-RSA-AES256-SHA
+* Server certificate:
+* 	 subject: CN=data.taxpayer.net; C=US; O=DOMAIN CONTROL VALIDATED BY TRUSTWAVE
+* 	 start date: 2012-04-23 12:16:03 GMT
+* 	 expire date: 2013-04-23 13:12:43 GMT
+* 	 common name: data.taxpayer.net (matched)
+* 	 issuer: C=US; ST=Illinois; L=Chicago; O=Trustwave Holdings, Inc.; CN=Trustwave Domain Validation CA, Level 1; emailAddress=ca@trustwave.com
+* 	 SSL certificate verify result: unable to get local issuer certificate (20), continuing anyway.
+* Server auth using Basic with user 'michael@taxpayer.net'
+> POST /api/imports2.json?name=temp.csv&fileId=0Pn32ch8x4yOdWh0FdZeLQOyLXu8ESWTOv6PPh5HNLU&method=append&viewUid=ymzi-k5ry HTTP/1.1
+Authorization: Basic bWljaGFlbEB0YXhwYXllci5uZXQ6bWlzdHlvbGl2ZQ==
+Host: data.taxpayer.net
+Accept: */*
+X-App-Token: k4IyKtdGWTTjxT0bnd985kgr7
+
+< HTTP/1.1 200 OK
+< Server: nginx
+< Date: Mon, 15 Oct 2012 23:57:33 GMT
+< Content-Type: application/json; charset=utf-8
+< Transfer-Encoding: chunked
+< Connection: keep-alive
+< 
+* Connection #0 to host data.taxpayer.net left intact
+* Closing connection #0
