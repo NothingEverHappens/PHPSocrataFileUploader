@@ -62,19 +62,26 @@ class Socrata_model {
      */
 
     public function upsert_file( $view_id, $file_path, $skip_lines = 1 ) {
+        /*............... TODO: $this->create_working_copy("view_id");
+            Use socrata publishing workflow
+        */
 
+        /**
+         * We want to get list of columns from socrata
+         */
         $view = $this->get_view( $view_id );
         if ( empty( $view[ "columns" ] ) || !is_array( $view[ "columns" ] ) ) {
             throw new Exception( "Socrata API didn't return list of columns for the view" );
         }
         /**
-         * Get list of columns based on information return by Socrata
+         * Get list of columns based on information returned by Socrata
          */
         $columns = Array();
         foreach ( $view[ "columns" ] as $column ) {
             $columns[ ] = $column[ "name" ];
         }
 
+        /*............... TODO: We may need to stream the file to avoid reaching memory limits for big files */
         $file = file( $file_path );
 
         /**
@@ -603,7 +610,7 @@ class Socrata_model {
     public function generate_translation( $columns ) {
 
         if ( empty( $this->_options[ "translation" ] ) ) {
-            return "[]";
+            return "";
         }
 
         if ( !is_array( $this->_options[ "translation" ] ) && !is_object( $this->_options[ "translation" ] ) ) {
@@ -686,6 +693,7 @@ class Socrata_model {
         }
 
         $blueprint = (array)$this->_options[ "blueprint" ];
+
         $scan_results[ "summary" ] = (array)$scan_results[ "summary" ];
 
         $columns = Array();
@@ -745,7 +753,6 @@ class Socrata_model {
          * into multiple files, post the first one and then append  the rest..
          */
         if ( filesize( $file_path ) > 1.2 * $this->_options[ "chunk_size" ] ) {
-
             return $this->post_huge_file( $file_path, $data_set_name );
         }
 
@@ -753,9 +760,7 @@ class Socrata_model {
         $scan_result = $this->scan_file( $file_path );
 
         $blueprint = $this->generate_blueprint( $scan_result, $data_set_name );
-
         $translation = $this->generate_translation( $blueprint[ "columns" ] );
-
 
         $query = $this->post( "/imports2.json", Array(
             "name" => urldecode( $data_set_name . ".csv" ),
