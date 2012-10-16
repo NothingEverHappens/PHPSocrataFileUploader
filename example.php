@@ -9,7 +9,7 @@ include_once "Socrata_model.php";
 
 
 
-$temp_dir = sprintf('.%scache%1$s', DIRECTORY_SEPARATOR);
+$temp_dir = sprintf('.%sdata%1$s', DIRECTORY_SEPARATOR);
 $log_file = "{$temp_dir}curl_log.txt";
 $root_url = "https://data.taxpayer.net/api";
 $data_set_path = realpath("{$temp_dir}test-merge-data-e8bf92fd9f63adac2aa34c6967bf08d8-dump-7-1.csv");

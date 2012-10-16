@@ -313,7 +313,7 @@ class Socrata_model {
         $result = curl_exec( $curl );
 
         if ( $err = curl_errno( $curl ) ) {
-            throw new Exception("curl_error", curl_error( $curl ), curl_errno( $curl ) );
+            throw new Exception("curl_error". curl_error( $curl ), curl_errno( $curl ) );
         }
 
 
