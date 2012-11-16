@@ -32,6 +32,7 @@ class Socrata_model {
      */
 
     public function __construct( $options = Array() ) {
+        /*............... TODO: Duplicated  */
         if ( !extension_loaded( 'curl' ) ) {
             throw new Exception( "curl is not installed" );
         }
@@ -62,26 +63,18 @@ class Socrata_model {
      */
 
     public function upsert_file( $view_id, $file_path, $skip_lines = 1 ) {
-        /*............... TODO: $this->create_working_copy("view_id");
-            Use socrata publishing workflow
-        */
-
-        /**
-         * We want to get list of columns from socrata
-         */
         $view = $this->get_view( $view_id );
         if ( empty( $view[ "columns" ] ) || !is_array( $view[ "columns" ] ) ) {
             throw new Exception( "Socrata API didn't return list of columns for the view" );
         }
         /**
-         * Get list of columns based on information returned by Socrata
+         * Get list of columns based on information return by Socrata
          */
         $columns = Array();
         foreach ( $view[ "columns" ] as $column ) {
             $columns[ ] = $column[ "name" ];
         }
 
-        /*............... TODO: We may need to stream the file to avoid reaching memory limits for big files */
         $file = file( $file_path );
 
         /**
@@ -289,7 +282,9 @@ class Socrata_model {
      */
     private function query( $url, $curl_options = Array() ) {
 
-        //$this->log( "Url:" . $url );
+        $this->log( "Url:" . $url );
+        flush();
+
         $curl_options += Array(
             CURLOPT_SSL_VERIFYPEER => FALSE,
             CURLOPT_SSL_VERIFYHOST => 2,
@@ -303,24 +298,24 @@ class Socrata_model {
         $curl_options += $this->get_log_options();
         $curl_options += $this->get_credentials_options();
 
-
+        sleep( 2 );
         $curl = $this->get_curl();
-
+//        ttt( $curl_options );
         curl_setopt_array( $curl, $curl_options );
-
-        /*
-         *   Some timeouts for debug
-         *   set_time_limit( 5 );
-         *   $max_exe_time = 2000; // time in milliseconds
-         *   curl_setopt($curl, CURLOPT_TIMEOUT_MS, $max_exe_time);
-         *
-         * */
-
-
+        //set_time_limit( 5 );
+        // $max_exe_time = 2000; // time in milliseconds
+        //curl_setopt($curl, CURLOPT_TIMEOUT_MS, $max_exe_time);
+        //
         $result = curl_exec( $curl );
-
+        $http_status = curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+        ttt( $http_status, "GREEN" );
         if ( $err = curl_errno( $curl ) ) {
-            throw new Exception("curl_error". curl_error( $curl ), curl_errno( $curl ) );
+
+            ttt( $result );
+            ttt( $this->_options );
+            ttt( curl_error( $curl ), "red" );
+
+            throw new Exception( curl_error( $curl ), curl_errno( $curl ) );
         }
 
 
@@ -417,8 +412,7 @@ class Socrata_model {
      * @throws RuntimeException If chunk size is smaller than the biggest line in the file
      */
 
-    /*............... TODO: Test and implement */
-    public function not_tested_split_csv_by_size_v2( $file_path, $chunk_size = 1000000 ) {
+    public function not_tested_split_csv_by_size( $file_path, $chunk_size = 1000000 ) {
 
         if ( !file_exists( $file_path ) ) {
             throw new InvalidArgumentException( "File doesn't exist " . $file_path );
@@ -484,7 +478,8 @@ class Socrata_model {
 
 
     private function log( $message ) {
-        throw new Exception("Not implemented");
+        ttt_flush( $message );
+
     }
 
     /**
@@ -562,7 +557,8 @@ class Socrata_model {
      * @return mixed
      */
     public function append_file( $view_id, $file_name ) {
-
+        $wait_time = 1800;
+        sleep( $wait_time );
 
         while ( true ) {
             $data = $this->scan_file( $file_name );
@@ -576,13 +572,10 @@ class Socrata_model {
                     )
                 );
             } catch ( Exception $e ) {
-                /**
-                 * This part deals with 409 error.
-                 * I wanted data sets to be uploaded ASAP,
-                 * so I just retried every time I got an exception
-                 *
-                 */
-                sleep( 60*10 );
+                ttt( "restarting", "red" );
+                ttt_flush( "Very bad" );
+                $wait_time += 1800;
+                sleep( $wait_time );
                 continue;
             }
             flush();
@@ -610,7 +603,7 @@ class Socrata_model {
     public function generate_translation( $columns ) {
 
         if ( empty( $this->_options[ "translation" ] ) ) {
-            return "";
+            return "[]";
         }
 
         if ( !is_array( $this->_options[ "translation" ] ) && !is_object( $this->_options[ "translation" ] ) ) {
@@ -646,6 +639,22 @@ class Socrata_model {
 
         return "[" . join( ",", $result ) . "]";
     }
+
+    /**
+     * Publish working copy
+     *
+     * @param string $view Socrata  ID in xxxx-xxxx format
+     * @return string  Socrata ID in xxxx-xxxx format
+     * @throws Exception
+     */
+    public function publish_working_copy( $view ) {
+        $response = $this->decode( $this->post( "/views/$view/publication.json?method=copy" ) );
+        if ( empty( $response[ "id" ] ) ) {
+            throw new Exception( "Socrata API didn't return valid ID" );
+        }
+        return $response[ "id" ];
+    }
+
 
     /**
      * Create Working Copy
@@ -688,12 +697,11 @@ class Socrata_model {
         }
 
         if ( !is_array( $this->_options[ "blueprint" ] ) && !is_object( $this->_options[ "blueprint" ] ) ) {
-            
+            ttt( $this->_options );
             throw new InvalidArgumentException( "Blueprint  must be array or object" );
         }
 
         $blueprint = (array)$this->_options[ "blueprint" ];
-
         $scan_results[ "summary" ] = (array)$scan_results[ "summary" ];
 
         $columns = Array();
@@ -753,6 +761,7 @@ class Socrata_model {
          * into multiple files, post the first one and then append  the rest..
          */
         if ( filesize( $file_path ) > 1.2 * $this->_options[ "chunk_size" ] ) {
+
             return $this->post_huge_file( $file_path, $data_set_name );
         }
 
@@ -760,7 +769,9 @@ class Socrata_model {
         $scan_result = $this->scan_file( $file_path );
 
         $blueprint = $this->generate_blueprint( $scan_result, $data_set_name );
+
         $translation = $this->generate_translation( $blueprint[ "columns" ] );
+
 
         $query = $this->post( "/imports2.json", Array(
             "name" => urldecode( $data_set_name . ".csv" ),
