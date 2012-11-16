@@ -68,7 +68,10 @@ var_dump( $data );
  * Socrata support says there is no way to set up unique row ID via API, so we this
  * call will result in appending data set.
  */
-$data = $socrata->upsert_file( $data_set_id, $data_set_path);
+$working_copy_id = $socrata->create_working_copy( $data[ "socrata_id" ] );
+$result = $socrata->upsert_file( $working_copy_id, $data_set_path );
+$socrata->publish_working_copy( $working_copy_id );
+
 echo "<hr>";
 echo "File was upserted";
 echo "<hr>";
